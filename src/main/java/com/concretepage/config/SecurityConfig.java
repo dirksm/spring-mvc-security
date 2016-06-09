@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
+import com.concretepage.bean.Role;
 import com.concretepage.service.AuthenticationService;
 
 @Configuration
@@ -30,12 +31,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	AuthenticationService authenticationService;
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests().antMatchers("/info/**").hasAnyRole("ADMIN","USER").
+		http.authorizeRequests().antMatchers("/info/**").authenticated().
 		and().formLogin();
 	}
     @Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        ShaPasswordEncoder encoder = new ShaPasswordEncoder();
+        ShaPasswordEncoder encoder = new ShaPasswordEncoder(256);
         auth.userDetailsService(authenticationService).passwordEncoder(encoder);
 	}
     @Bean

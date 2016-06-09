@@ -1,6 +1,8 @@
 package com.concretepage.dao;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.TreeSet;
 
 import javax.sql.DataSource;
 
@@ -9,7 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import com.concretepage.bean.UserInfo;
+import com.concretepage.bean.UserModel;
 @Repository
 public class UserDAO {
 	private JdbcTemplate jdbcTemplate;
@@ -17,21 +19,39 @@ public class UserDAO {
     public void setDataSource(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
-    public UserInfo getUserInfo(String username){
-    	String sql = "SELECT u.username name, u.password pass, a.authority role FROM "+
-    			     "comp_users u INNER JOIN comp_authorities a on u.username=a.username WHERE "+
-    			     "u.enabled =1 and u.username = ?";
-
-    	UserInfo userInfo = (UserInfo)jdbcTemplate.queryForObject(sql, new Object[]{username},
-    		new RowMapper<UserInfo>() {
-	            public UserInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
-	                UserInfo user = new UserInfo();
-	                user.setUsername(rs.getString("name"));
-	                user.setPassword(rs.getString("pass"));
-	                user.setRole(rs.getString("role"));
-	                return user;
-	            }
+    public JdbcTemplate getTemplate() {
+    	return this.jdbcTemplate;
+    }
+    
+    
+    public UserModel getUserCredsByName(String username) {
+        String sqlString = "select " +
+                " username" +
+                ", password" +
+                " from users where username = ?";
+        Object[] args = {username};
+        List<UserModel> matches = getTemplate().query(sqlString, args, new RowMapper<UserModel>() {
+            public UserModel mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return new UserModel(rs.getString("username"),rs.getString("password"));
+            }
         });
-    	return userInfo;
+        return matches!=null&&matches.size()>0?matches.get(0):null;
+    }
+    
+    public TreeSet<String> getUserRoles(String username) {
+        String sqlString = "select " +
+            " role" +
+            " from user_roles where username = ?";
+            Object[] args = {username};
+            List<String> matches = getTemplate().query(sqlString, args, new RowMapper<String>() {
+                public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    return rs.getString("role");
+                }
+            });
+            TreeSet<String> list = new TreeSet<String>();
+            for (String match : matches) {
+    			list.add(match);
+    		}
+            return list;
     }
 }
